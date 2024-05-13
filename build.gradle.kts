@@ -3,3 +3,15 @@ plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
 }
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:7.0.4")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
+    }
+}

@@ -1,5 +1,6 @@
 package srbn.graphpi
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -7,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import srbn.graphpi.BackEnd.GManagement.GenerateChart
 import srbn.graphpi.BackEnd.Lexer.*;
 import srbn.graphpi.BackEnd.Parser.*;
 import java.io.StringReader
@@ -44,7 +46,17 @@ class MainActivity : AppCompatActivity() {
             lexer = Lexer(inputCode)
             parser = Parser(lexer)
             parser.parse()
-            println("Compilation finished")
+            if (parser.graphs.isNotEmpty()) {
+                val generateChart = GenerateChart(parser.graphs)
+                val intent = Intent(this, ShowGraphsActivity::class.java)
+                intent.putExtra("chartGenerator", generateChart)
+                intent.putExtra("Errors", parser.errors)
+                intent.putExtra("header", parser.header)
+                startActivity(intent)
+            } else {
+                // El contexto de OtherActivity es nulo
+            }
+
         } catch (e: Exception) {
             println("Error: ${e.message}")
         }

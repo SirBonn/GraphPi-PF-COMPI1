@@ -71,7 +71,7 @@ parser code{:
 non terminal        graphPi, graphDecl, graphTypes;
 
 non terminal        BarsGraph   barsGraphDecl;
-non terminal        PieGraph    pieGraphDecl;
+non terminal        PieGraph    pieGraphDecl, infoCard;
 non terminal        LinealGraph lineGraphDecl;
 non terminal        PlotGraph   plotGraphDecl;
 non terminal        Header      header;
@@ -90,7 +90,7 @@ terminal            DATA, CATEGORY, NAME, TITTLE, POINTS, VALUE, LABEL, COLOR, X
                     PLUS, MINUS, ASTHERISK, DIVIDE, SUM, SUB, ASSIGN, MUL, DIV,
                     EQUALS, DIFFERENT, GREATER, LESS, GREATEREQUAL, LESSEQUAL;
 
-terminal            String DIGIT, NUMBER, LETTER, STRING, HEXCODE, NUMBSIZE;
+terminal            String DIGIT, NUMBER, LETTER, STRING, HEXCODE, NUMBSIZE, IDENTIFIER;
 
 start with          graphPi;
 
@@ -103,6 +103,7 @@ header::=           TITTLE STRING:tittle COMMA DESCRIPTION STRING:desc COMMA
                     BACKGROUNDCOLOR HEXCODE:back COMMA FONTFAMILY STRING:font COMMA
                     FONTSIZE STRING:fontSize                                    {:  parser.setHeader(new Header(tittle, desc, keys, header, footer, back, font, fontSize));:}
             |                                                                   {:  parser.setHeader(new Header());:}
+            |       error                                                       {::}
             ;
 
 keywordsDecl::=     STRING:word                                                 {:  ArrayList<String> keys = new ArrayList<>();
@@ -119,15 +120,24 @@ headerDecl::=        TITTLE STRING:tittle                                       
 footerDecl::=        COPYRIGHT STRING:copy                                      {:  RESULT = parser.removeQuotes(copy);:}
                 ;
 graphDecl::=
-                    graphDecl OPENBRACKET DATA OPENBRACE OPENBRACKET graphTypes CLOSEBRACKET
-                |   OPENBRACKET DATA OPENBRACE OPENBRACKET graphTypes CLOSEBRACKET
+                    graphDecl OPENBRACKET DATA OPENBRACE OPENBRACKET jsonDecl CLOSEBRACKET
+                |   OPENBRACKET DATA OPENBRACE OPENBRACKET jsonDecl CLOSEBRACKET
                 ;
+
+jsonDecl::=
+                    graphTypes
+                |   varDecl
+                |   sentencesDecl
+                ;
+
+
 
 graphTypes::=
                     barsGraphDecl:barsGraph                                     {: parser.addGraph(barsGraph);  :}
                 |   lineGraphDecl:lineGraph                                     {: parser.addGraph(lineGraph);  :}
                 |   pieGraphDecl:pieGraph                                       {: parser.addGraph(pieGraph);   :}
                 |   plotGraphDecl:plotGraph                                     {: parser.addGraph(plotGraph);  :}
+                |   infoCard:infoCard                                           {: parser.addGraph(infoCard);   :}
                 |   error                                                       {::}
                 ;
 
@@ -150,7 +160,7 @@ lineDataDecl::=
                 |   NAME STRING:name COMMA POINTS OPENBRACE OPENBRACKET linePoints:points
                     CLOSEBRACE COMMA COLOR HEXCODE:col COMMA LINESTYLE
                     STRING:style                                                {:  ArrayList<LinealData> lineData = new ArrayList<>();
-                                                                                    lineData.add(new LinealData(parser.removeQuotes(name), col, parser.removeQuotes(style), points));
+                                                                                    lineData.add(new LinealData(parser.removeQuotes(name), parser.removeQuotes(col), parser.removeQuotes(style), points));
                                                                                     RESULT = lineData;:}
                 |   lineDataDecl:lineData CLOSEBRACKET COMMA OPENBRACKET NAME
                     STRING:name COMMA POINTS OPENBRACE OPENBRACKET
@@ -160,9 +170,8 @@ lineDataDecl::=
                     STRING:name COMMA POINTS OPENBRACE OPENBRACKET
                     linePoints:points CLOSEBRACE
                     COMMA COLOR HEXCODE:col COMMA LINESTYLE STRING:style
-                    CLOSEBRACKET                                                {:  lineData.add(new LinealData(parser.removeQuotes(name), col, parser.removeQuotes(style), points));
+                    CLOSEBRACKET                                                {:  lineData.add(new LinealData(parser.removeQuotes(name), parser.removeQuotes(col), parser.removeQuotes(style), points));
                                                                                     RESULT = lineData;                                :}
-//                |   error CLOSEBRACKET                                            {::}
                 ;
 
 linePoints::=       Xaxis NUMBER:x COMMA Yaxis NUMBER:y  CLOSEBRACKET           {:  ArrayList<DataGraph> data = new ArrayList<>();
@@ -190,16 +199,15 @@ pieDataDecl::=
                                                                                     data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
                                                                                     RESULT = data;                                  :}
                 |   LABEL STRING:label COMMA VALUE NUMBER:val COMMA COLOR
-                    HEXCODE:col CLOSEBRACKET                                     {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), col));
+                    HEXCODE:col CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   pieDataDecl:pieData COMMA OPENBRACKET LABEL STRING:label COMMA
                     VALUE NUMBER:val CLOSEBRACKET                               {:  pieData.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
                                                                                     RESULT=pieData;                                 :}
                 |   pieDataDecl:pieData COMMA OPENBRACKET LABEL STRING:label COMMA
-                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET        {:  pieData.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), col));
+                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET       {:  pieData.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
                                                                                     RESULT=pieData;                                 :}
-//                | error CLOSEBRACKET                                            {::}
                 ;
 
 plotGraphDecl::=
@@ -213,16 +221,15 @@ plotsData::=
                                                                                     RESULT = data;                                  :}
                 |   Xaxis NUMBER:x COMMA Yaxis NUMBER:y COMMA SIZE NUMBER:s
                     COMMA COLOR HEXCODE:col CLOSEBRACKET                        {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), col));
+                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   plotsData:points COMMA OPENBRACKET  Xaxis NUMBER:x COMMA Yaxis
                     NUMBER:y    CLOSEBRACKET                                    {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y)));
                                                                                     RESULT = points;                                :}
                 |   plotsData:points COMMA OPENBRACKET  Xaxis NUMBER:x COMMA Yaxis
                     NUMBER:y  COMMA SIZE NUMBER:s COMMA COLOR HEXCODE:col
-                    CLOSEBRACKET                                                {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), col));
+                    CLOSEBRACKET                                                {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), parser.removeQuotes(col)));
                                                                                     RESULT = points;                                :}
-//                |   error CLOSEBRACKET                                          {::}
                 ;
 
 dataDecl::=
@@ -230,28 +237,73 @@ dataDecl::=
                                                                                     data.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val)));
                                                                                     RESULT = data;                                  :}
                 |   CATEGORY STRING:cat COMMA VALUE NUMBER:val COMMA COLOR
-                    HEXCODE:col CLOSEBRACKET                                     {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), col));
+                    HEXCODE:col CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   dataDecl:barsData COMMA OPENBRACKET CATEGORY STRING:cat COMMA
                     VALUE NUMBER:val CLOSEBRACKET                               {:  barsData.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val)));
                                                                                     RESULT=barsData;                                :}
                 |   dataDecl:barsData COMMA OPENBRACKET CATEGORY STRING:cat COMMA
-                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET        {:  barsData.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), col));
+                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET       {:  barsData.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), parser.removeQuotes(col)));
                                                                                     RESULT=barsData;                                :}
-//                |   error CLOSEBRACKET                                          {::}
                 ;
 
 
 chartGraphs::=
                     CHART OPENBRACKET TITTLE STRING:tittle COMMA XAXISLABEL
                     STRING:xLabel COMMA YAXISLABEL STRING:yLabel CLOSEBRACKET   {:  RESULT = new ChartGraph(parser.removeQuotes(tittle), parser.removeQuotes(xLabel), parser.removeQuotes(yLabel));:}
-//                |   error CLOSEBRACKET                                          {::}
                 ;
 
 pieChart::=
                     CHART OPENBRACKET TITTLE STRING:tittle COMMA
-                    LEGENDPOSITION STRING:pos CLOSEBRACKET                        {:  RESULT = new ChartGraph(parser.removeQuotes(tittle), parser.removeQuotes(pos));:}
-//                |   error CLOSEBRACKET                                          {::}
+                    LEGENDPOSITION STRING:pos CLOSEBRACKET                      {:  RESULT = new ChartGraph(parser.removeQuotes(tittle), parser.removeQuotes(pos));:}
+                ;
+
+infoCard::=
+                    VALUE NUMBER:val COMMA LABEL STRING:label COMMA DESCRIPTION
+                    STRING:desc CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
+                                                                                    RESULT = new InfoCard(data, parser.removeQuotes(desc));:}
+                |   VALUE NUMBER:val COMMA LABEL STRING:label COMMA DESCRIPTION
+                    STRING:desc COMMA ICON STRING:icon COMMA COLOR HEXCODE:col
+                    COMMA LINK STRING:link CLOSEBRACKET                         {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
+                                                                                    RESULT = new PieChart(data, parser.removeQuotes(desc), parser.removeQuotes(icon), parser.removeQuotes(link));:}
+                ;
+
+sentencesDecl::=
+                |   ifDecl
+                |   whileDecl
+                |   forDecl
+                |   doWhileDecl
+                ;
+
+varDecl::=
+
+                |
+                ;
+
+stringDeclaration::=
+                    IDENTIFIER:id ASSIGN STRING:val SEMICOLON                        {:  RESULT = new StringDeclaration(parser.removeQuotes(id), parser.removeQuotes(val));:}
+                ;
+
+mathOperators::=
+                    PLUS
+                |   MINUS
+                |   ASTHERISK
+                |   DIVIDE
+                |   SUM
+                |   SUB
+                |   MUL
+                |   DIV
+                ;
+
+logicalOperators::=
+                    EQUALS
+                |   DIFFERENT
+                |   GREATER
+                |   LESS
+                |   GREATEREQUAL
+                |   LESSEQUAL
                 ;
 

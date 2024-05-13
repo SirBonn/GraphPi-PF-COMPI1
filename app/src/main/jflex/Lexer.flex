@@ -25,6 +25,7 @@ LETTER          = [a-zA-Z]
 STRING          = (\"([^\"]|[a-zA-Z]|(\s)|[0-9])+\")
 NUMBSIZE        = ([0-9]+)"px"
 HEXCODE         = ("\"#"[0-9a-fA-F]{6}"\"")
+IDENTIFIER      = (-|_|[a-zA-Z]|[a-zA-Z0-9])+"ID" /*| (-|_|[a-zA-Z]|[a-zA-Z0-9])+"id"*/
 //DECLARATIONS
 DATA            = "\"data\":"
 CATEGORY        = "\"category\":"
@@ -76,6 +77,8 @@ ELSE            = "else"
 FOR             = "for"
 WHILE           = "while"
 DOWHILE         = "do"
+TRUE            = "true"
+FALSE           = "false"
 //OTHERS
 COMMA           = ","
 SEMICOLON       = ";"
@@ -176,9 +179,10 @@ SINGLEQUOTE     = "\'"
 {SUB}                             {return symbol(ParserSym.SUB, yytext());}
 {MUL}                             {return symbol(ParserSym.MUL, yytext());}
 {DIV}                             {return symbol(ParserSym.DIV, yytext());}
+{IDENTIFIER}                      {return symbol(ParserSym.IDENTIFIER, yytext());}
 {NUMBER}                          {return symbol(ParserSym.NUMBER, yytext());}
 {DIGIT}                           {return symbol(ParserSym.DIGIT, yytext());}
 {LETTER}                          {return symbol(ParserSym.LETTER, yytext());}
 {STRING}                          {return symbol(ParserSym.STRING, yytext());}
-{WHITESPCS}                      {/*Ignore*/}
-[^]                              {addError(yytext());}
+{WHITESPCS}                       {/*Ignore*/}
+[^]                               {addError(yytext());}
