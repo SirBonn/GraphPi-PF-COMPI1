@@ -1,6 +1,8 @@
 package srbn.graphpi.BackEnd.DomainObjs.Errors;
 
-public class ErrorE extends Exception{
+import java.io.Serializable;
+
+public class ErrorE extends Exception implements Serializable {
 
     public ErrorE(String message) {
         super(message);

@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class LinealData {
+public class LinealData implements Serializable {
 
     private String name;
     private String line;
@@ -42,6 +43,10 @@ public class LinealData {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public ArrayList<DataGraph> getData() {
+        return data;
     }
 
 }

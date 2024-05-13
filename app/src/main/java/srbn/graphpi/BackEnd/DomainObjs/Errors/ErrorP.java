@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs.Errors;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ErrorP {
+public class ErrorP implements Serializable {
 
     private int line;
     private int column;

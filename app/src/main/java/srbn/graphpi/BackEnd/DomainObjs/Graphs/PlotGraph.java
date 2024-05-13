@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class PlotGraph extends Graph {
+public class PlotGraph extends Graph implements Serializable {
 
     private ChartGraph chartGraph;
     public PlotGraph(ArrayList<DataGraph> data, ChartGraph chartGraph) {

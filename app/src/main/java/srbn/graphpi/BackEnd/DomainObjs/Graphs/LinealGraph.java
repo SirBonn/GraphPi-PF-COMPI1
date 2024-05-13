@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class LinealGraph extends Graph {
+public class LinealGraph extends Graph implements Serializable {
 
     private ArrayList<LinealData> linealData;
     private ChartGraph chartGraph;

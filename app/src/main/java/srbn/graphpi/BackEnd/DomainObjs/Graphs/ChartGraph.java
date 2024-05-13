@@ -1,6 +1,8 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
-public class ChartGraph {
+import java.io.Serializable;
+
+public class ChartGraph implements Serializable {
 
     private String tittle;
     private String xLabel;

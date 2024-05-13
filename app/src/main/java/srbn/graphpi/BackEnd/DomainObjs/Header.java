@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Header {
+public class Header implements Serializable {
     private String title="";
     private String desc="";
     private ArrayList<String> keys;

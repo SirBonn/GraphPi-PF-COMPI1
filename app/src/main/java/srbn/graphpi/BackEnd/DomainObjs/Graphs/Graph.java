@@ -1,8 +1,9 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Graph {
+public class Graph implements Serializable {
     private ArrayList<DataGraph> data;
     private int type;
 

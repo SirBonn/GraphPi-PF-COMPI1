@@ -1,6 +1,8 @@
 package srbn.graphpi.BackEnd.DomainObjs.Graphs;
 
-public class DataGraph {
+import java.io.Serializable;
+
+public class DataGraph implements Serializable {
 
     private String name;
     private int value;
@@ -77,5 +79,13 @@ public class DataGraph {
 
     public void setY(int y) {
         this.y = y;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
     }
 }
