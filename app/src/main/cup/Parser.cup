@@ -3,6 +3,8 @@ package  srbn.graphpi.BackEnd.Parser;
 import java_cup.runtime.*;
 import srbn.graphpi.BackEnd.DomainObjs.Errors.*;
 import srbn.graphpi.BackEnd.DomainObjs.Graphs.*;
+import srbn.graphpi.BackEnd.DomainObjs.SymTable;
+import srbn.graphpi.BackEnd.DomainObjs.Sentences.*;
 import srbn.graphpi.BackEnd.DomainObjs.Header;
 import java.util.ArrayList;
 
@@ -11,7 +13,9 @@ import java.util.ArrayList;
 parser code{:
 
     private ArrayList<ErrorP> errors = new ArrayList<>();
-    private ArrayList<Graph> graphs = new ArrayList<>();
+    private ArrayList<Graph> allGraps = new ArrayList<>();
+    private ArrayList<Sentence> sentences = new ArrayList<>();
+    private SymTable symTable = new SymTable();
     private Header header;
 
     public void syntax_error(Symbol token) {
@@ -34,8 +38,18 @@ parser code{:
                 return str.replace("\"", "");
             }
 
-        public void addGraph(Graph g){
-            graphs.add(g);
+        public void addGraphs(ArrayList<Graph> gr){
+            for(Graph g : gr){
+                allGraps.add(g);
+            }
+        }
+
+        public void addSym(String id, Object val){
+            symTable.addVar(id, val);
+        }
+
+        public void addSentence(Sentence s){
+            sentences.add(s);
         }
 
         public void addError(Symbol token, String msj) {
@@ -50,12 +64,30 @@ parser code{:
             }
         }
 
+        public int getIntValue(String id){
+            if(symTable.getVar(id) instanceof Integer){
+                return (int)symTable.getVar(id);
+            }else{
+                addError(new Symbol(0, 0, 0), "Error: " + id + " is not a number");
+                return 0;
+            }
+        }
+
+        public String getStringValue(String id){
+            if(symTable.getVar(id) instanceof String){
+                return (String)symTable.getVar(id);
+            }else{
+                addError(new Symbol(0, 0, 0), "Error: " + id + " is not a string");
+                return "";
+            }
+        }
+
         public ArrayList<ErrorP> getErrors() {
             return errors;
         }
 
         public ArrayList<Graph> getGraphs() {
-            return graphs;
+            return allGraps;
         }
 
         public Header getHeader() {
@@ -66,25 +98,43 @@ parser code{:
             this.header = header;
         }
 
+        public SymTable getSymTable() {
+            return symTable;
+        }
+
+        public ArrayList<Sentence> getSentences() {
+            return sentences;
+        }
+
 :}
 
-non terminal        graphPi, graphDecl, graphTypes;
+non terminal        graphPi, jsonDecl, sentencesDecl, varDecl, mathOperators,
+                    mathSentence, vars, vls, allDecl;
 
 non terminal        BarsGraph   barsGraphDecl;
 non terminal        PieGraph    pieGraphDecl, infoCard;
 non terminal        LinealGraph lineGraphDecl;
 non terminal        PlotGraph   plotGraphDecl;
 non terminal        Header      header;
-non terminal        String headerDecl, footerDecl;
+non terminal        Graph       graphTypes;
+non terminal        String headerDecl, footerDecl, forCondition, logicalOperators, passOperators, varAssign;
+non terminal        Integer dataValue, multiplyData;
 non terminal        ArrayList<DataGraph> dataDecl, plotsData, linePoints, pieDataDecl;
 non terminal        ArrayList<LinealData> lineDataDecl;
 non terminal        ArrayList<String> keywordsDecl;
+non terminal        ArrayList<Graph> graphDecl;
 non terminal        ChartGraph chartGraphs, pieChart;
+non terminal        DoSentence doWhileDecl;
+non terminal        IfElSentence ifDecl;
+non terminal        ForSentence forDecl;
+non terminal        WhileSentence whileDecl;
+non terminal        Conditional conditionalDecl;
+
 
 terminal            DATA, CATEGORY, NAME, TITTLE, POINTS, VALUE, LABEL, COLOR, Xaxis, Yaxis, LEGENDPOSITION,
                     XAXISLABEL, YAXISLABEL, SIZE, DESCRIPTION, ICON, LINK, LINESTYLE, CHART, KEYWORDS,
                     HEADER, FOOTER, BACKGROUNDCOLOR, FONTFAMILY, FONTSIZE, COPYRIGHT,
-                    IF, ELSE, FOR, WHILE, DOWHILE,
+                    IF, ELSE, FOR, WHILE, DOWHILE, TRUE, FALSE,
                     COMMA, SEMICOLON, DOBLEDOT, OPENBRACKET, CLOSEBRACKET, OPENBRACE, CLOSEBRACE, OPENPARENTHESIS,
                     CLOSEPARENTHESIS, DOBLEQUOTE, SINGLEQUOTE,
                     PLUS, MINUS, ASTHERISK, DIVIDE, SUM, SUB, ASSIGN, MUL, DIV,
@@ -94,7 +144,10 @@ terminal            String DIGIT, NUMBER, LETTER, STRING, HEXCODE, NUMBSIZE, IDE
 
 start with          graphPi;
 
-graphPi::=          OPENBRACKET header graphDecl CLOSEBRACKET;
+graphPi::=
+                    OPENBRACKET header jsonDecl CLOSEBRACKET
+                |   jsonDecl
+                ;
 
 header::=           TITTLE STRING:tittle COMMA DESCRIPTION STRING:desc COMMA
                     KEYWORDS OPENBRACE keywordsDecl:keys CLOSEBRACE COMMA
@@ -102,9 +155,9 @@ header::=           TITTLE STRING:tittle COMMA DESCRIPTION STRING:desc COMMA
                     FOOTER OPENBRACKET footerDecl:footer CLOSEBRACKET COMMA
                     BACKGROUNDCOLOR HEXCODE:back COMMA FONTFAMILY STRING:font COMMA
                     FONTSIZE STRING:fontSize                                    {:  parser.setHeader(new Header(tittle, desc, keys, header, footer, back, font, fontSize));:}
-            |                                                                   {:  parser.setHeader(new Header());:}
-            |       error                                                       {::}
-            ;
+                |                                                               {:  parser.setHeader(new Header());:}
+                |   error                                                       {::}
+                ;
 
 keywordsDecl::=     STRING:word                                                 {:  ArrayList<String> keys = new ArrayList<>();
                                                                                     keys.add(parser.removeQuotes(word));
@@ -114,30 +167,32 @@ keywordsDecl::=     STRING:word                                                 
                                                                                     RESULT = keys;                                  :}
                 ;
 
-headerDecl::=        TITTLE STRING:tittle                                       {:  RESULT = parser.removeQuotes(tittle);:}
+headerDecl::=       TITTLE STRING:tittle                                        {:  RESULT = parser.removeQuotes(tittle);:}
                 ;
 
-footerDecl::=        COPYRIGHT STRING:copy                                      {:  RESULT = parser.removeQuotes(copy);:}
-                ;
-graphDecl::=
-                    graphDecl OPENBRACKET DATA OPENBRACE OPENBRACKET jsonDecl CLOSEBRACKET
-                |   OPENBRACKET DATA OPENBRACE OPENBRACKET jsonDecl CLOSEBRACKET
+footerDecl::=       COPYRIGHT STRING:copy                                       {:  RESULT = parser.removeQuotes(copy);:}
                 ;
 
 jsonDecl::=
-                    graphTypes
-                |   varDecl
-                |   sentencesDecl
+                    graphDecl:graphs                                            {:  parser.addGraphs(graphs);:}
+                |   vls sentencesDecl
                 ;
 
+graphDecl::=
+                    graphDecl:grs vls OPENBRACKET DATA OPENBRACE OPENBRACKET
+                    graphTypes:gr vls CLOSEBRACKET                              {: grs.add(gr); RESULT = grs;:}
+                |   OPENBRACKET DATA OPENBRACE OPENBRACKET graphTypes:gr
+                    CLOSEBRACKET                                                {: ArrayList<Graph> grs = new ArrayList<Graph>();
+                                                                                   grs.add(gr); RESULT = grs;:}
 
+                ;
 
 graphTypes::=
-                    barsGraphDecl:barsGraph                                     {: parser.addGraph(barsGraph);  :}
-                |   lineGraphDecl:lineGraph                                     {: parser.addGraph(lineGraph);  :}
-                |   pieGraphDecl:pieGraph                                       {: parser.addGraph(pieGraph);   :}
-                |   plotGraphDecl:plotGraph                                     {: parser.addGraph(plotGraph);  :}
-                |   infoCard:infoCard                                           {: parser.addGraph(infoCard);   :}
+                    barsGraphDecl:barsGraph                                     {: RESULT=  barsGraph;  :}
+                |   lineGraphDecl:lineGraph                                     {: RESULT = lineGraph;  :}
+                |   pieGraphDecl:pieGraph                                       {: RESULT = pieGraph;   :}
+                |   plotGraphDecl:plotGraph                                     {: RESULT = plotGraph;  :}
+                |   infoCard:infoCard                                           {: RESULT = infoCard;   :}
                 |   error                                                       {::}
                 ;
 
@@ -174,18 +229,18 @@ lineDataDecl::=
                                                                                     RESULT = lineData;                                :}
                 ;
 
-linePoints::=       Xaxis NUMBER:x COMMA Yaxis NUMBER:y  CLOSEBRACKET           {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y)));
+linePoints::=       Xaxis dataValue:x COMMA Yaxis dataValue:y  CLOSEBRACKET     {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(x, y));
                                                                                     RESULT = data;                                  :}
-                |   Xaxis NUMBER:x COMMA Yaxis NUMBER:y COMMA LABEL STRING:label
+                |   Xaxis dataValue:x COMMA Yaxis dataValue:y COMMA LABEL STRING:label
                     CLOSEBRACKET                                                {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), parser.removeQuotes(label)));
+                                                                                    data.add(new DataGraph(x, y, parser.removeQuotes(label)));
                                                                                     RESULT = data;                                  :}
-                |   linePoints:points COMMA OPENBRACKET Xaxis NUMBER:x COMMA
-                    Yaxis NUMBER:y CLOSEBRACKET                                 {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y)));
+                |   linePoints:points COMMA OPENBRACKET Xaxis dataValue:x COMMA
+                    Yaxis dataValue:y CLOSEBRACKET                              {:  points.add(new DataGraph(x, y));
                                                                                     RESULT = points;                                :}
-                |   linePoints:points COMMA OPENBRACKET Xaxis NUMBER:x COMMA
-                    Yaxis NUMBER:y COMMA LABEL STRING:label CLOSEBRACKET        {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), parser.removeQuotes(label)));
+                |   linePoints:points COMMA OPENBRACKET Xaxis dataValue:x COMMA
+                    Yaxis dataValue:y COMMA LABEL STRING:label CLOSEBRACKET     {:  points.add(new DataGraph(x, y, parser.removeQuotes(label)));
                                                                                     RESULT = points;                                :}
                 ;
 
@@ -195,56 +250,56 @@ pieGraphDecl::=
                 ;
 
 pieDataDecl::=
-                    LABEL STRING:label COMMA VALUE NUMBER:val CLOSEBRACKET      {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
+                    LABEL STRING:label COMMA VALUE dataValue:val CLOSEBRACKET   {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), val));
                                                                                     RESULT = data;                                  :}
-                |   LABEL STRING:label COMMA VALUE NUMBER:val COMMA COLOR
+                |   LABEL STRING:label COMMA VALUE dataValue:val COMMA COLOR
                     HEXCODE:col CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), val, parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   pieDataDecl:pieData COMMA OPENBRACKET LABEL STRING:label COMMA
-                    VALUE NUMBER:val CLOSEBRACKET                               {:  pieData.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
+                    VALUE dataValue:val CLOSEBRACKET                            {:  pieData.add(new DataGraph(parser.removeQuotes(label), val));
                                                                                     RESULT=pieData;                                 :}
                 |   pieDataDecl:pieData COMMA OPENBRACKET LABEL STRING:label COMMA
-                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET       {:  pieData.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
+                    VALUE dataValue:val COMMA COLOR HEXCODE:col CLOSEBRACKET    {:  pieData.add(new DataGraph(parser.removeQuotes(label), val, parser.removeQuotes(col)));
                                                                                     RESULT=pieData;                                 :}
                 ;
 
 plotGraphDecl::=
-                     plotsData:data CLOSEBRACE COMMA chartGraphs:chart           {:  RESULT = new PlotGraph(data, chart);:}
-                |    plotsData:data CLOSEBRACE                                   {:  RESULT = new PlotGraph(data);:}
+                     plotsData:data CLOSEBRACE COMMA chartGraphs:chart          {:  RESULT = new PlotGraph(data, chart);:}
+                |    plotsData:data CLOSEBRACE                                  {:  RESULT = new PlotGraph(data);:}
                 ;
 
 plotsData::=
-                    Xaxis NUMBER:x COMMA Yaxis NUMBER:y  CLOSEBRACKET           {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y)));
+                    Xaxis dataValue:x COMMA Yaxis dataValue:y  CLOSEBRACKET     {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(x, y));
                                                                                     RESULT = data;                                  :}
-                |   Xaxis NUMBER:x COMMA Yaxis NUMBER:y COMMA SIZE NUMBER:s
+                |   Xaxis dataValue:x COMMA Yaxis dataValue:y COMMA SIZE NUMBER:s
                     COMMA COLOR HEXCODE:col CLOSEBRACKET                        {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), parser.removeQuotes(col)));
+                                                                                    data.add(new DataGraph(x, y, Integer.parseInt(s), parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
-                |   plotsData:points COMMA OPENBRACKET  Xaxis NUMBER:x COMMA Yaxis
-                    NUMBER:y    CLOSEBRACKET                                    {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y)));
+                |   plotsData:points COMMA OPENBRACKET  Xaxis dataValue:x COMMA Yaxis
+                    dataValue:y    CLOSEBRACKET                                 {:  points.add(new DataGraph(x, y));
                                                                                     RESULT = points;                                :}
-                |   plotsData:points COMMA OPENBRACKET  Xaxis NUMBER:x COMMA Yaxis
-                    NUMBER:y  COMMA SIZE NUMBER:s COMMA COLOR HEXCODE:col
-                    CLOSEBRACKET                                                {:  points.add(new DataGraph(Integer.parseInt(x), Integer.parseInt(y), Integer.parseInt(s), parser.removeQuotes(col)));
+                |   plotsData:points COMMA OPENBRACKET  Xaxis dataValue:x COMMA Yaxis
+                    dataValue:y  COMMA SIZE NUMBER:s COMMA COLOR HEXCODE:col
+                    CLOSEBRACKET                                                {:  points.add(new DataGraph(x, y, Integer.parseInt(s), parser.removeQuotes(col)));
                                                                                     RESULT = points;                                :}
                 ;
 
 dataDecl::=
-                    CATEGORY STRING:cat COMMA VALUE NUMBER:val CLOSEBRACKET     {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val)));
+                    CATEGORY STRING:cat COMMA VALUE dataValue:val CLOSEBRACKET  {:  ArrayList<DataGraph> data = new ArrayList<>();
+                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), val));
                                                                                     RESULT = data;                                  :}
-                |   CATEGORY STRING:cat COMMA VALUE NUMBER:val COMMA COLOR
+                |   CATEGORY STRING:cat COMMA VALUE dataValue:val COMMA COLOR
                     HEXCODE:col CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), parser.removeQuotes(col)));
+                                                                                    data.add(new DataGraph(parser.removeQuotes(cat), val, parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   dataDecl:barsData COMMA OPENBRACKET CATEGORY STRING:cat COMMA
-                    VALUE NUMBER:val CLOSEBRACKET                               {:  barsData.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val)));
+                    VALUE dataValue:val CLOSEBRACKET                            {:  barsData.add(new DataGraph(parser.removeQuotes(cat), val));
                                                                                     RESULT=barsData;                                :}
                 |   dataDecl:barsData COMMA OPENBRACKET CATEGORY STRING:cat COMMA
-                    VALUE NUMBER:val COMMA COLOR HEXCODE:col CLOSEBRACKET       {:  barsData.add(new DataGraph(parser.removeQuotes(cat), Integer.parseInt(val), parser.removeQuotes(col)));
+                    VALUE dataValue:val COMMA COLOR HEXCODE:col CLOSEBRACKET    {:  barsData.add(new DataGraph(parser.removeQuotes(cat), val, parser.removeQuotes(col)));
                                                                                     RESULT=barsData;                                :}
                 ;
 
@@ -260,50 +315,109 @@ pieChart::=
                 ;
 
 infoCard::=
-                    VALUE NUMBER:val COMMA LABEL STRING:label COMMA DESCRIPTION
+                    VALUE dataValue:val COMMA LABEL STRING:label COMMA DESCRIPTION
                     STRING:desc CLOSEBRACKET                                    {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val)));
-                                                                                    RESULT = new InfoCard(data, parser.removeQuotes(desc));:}
-                |   VALUE NUMBER:val COMMA LABEL STRING:label COMMA DESCRIPTION
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), val));
+                                                                                    RESULT = new PieGraph(data, parser.removeQuotes(desc));:}
+                |   VALUE dataValue:val COMMA LABEL STRING:label COMMA DESCRIPTION
                     STRING:desc COMMA ICON STRING:icon COMMA COLOR HEXCODE:col
                     COMMA LINK STRING:link CLOSEBRACKET                         {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(parser.removeQuotes(label), Integer.parseInt(val), parser.removeQuotes(col)));
-                                                                                    RESULT = new PieChart(data, parser.removeQuotes(desc), parser.removeQuotes(icon), parser.removeQuotes(link));:}
+                                                                                    data.add(new DataGraph(parser.removeQuotes(label), val, parser.removeQuotes(col)));
+                                                                                    RESULT = new PieGraph(data, parser.removeQuotes(desc), parser.removeQuotes(icon), parser.removeQuotes(link));:}
                 ;
 
 sentencesDecl::=
-                |   ifDecl
-                |   whileDecl
-                |   forDecl
-                |   doWhileDecl
+                    ifDecl:ifSent                                               {:  parser.addSentence(ifSent);:}
+                |   whileDecl:whileSent                                         {:  parser.addSentence(whileSent);:}
+                |   forDecl:forSent                                             {:  parser.addSentence(forSent);:}
+                |   doWhileDecl:dowhileSent                                     {:  parser.addSentence(dowhileSent);:}
                 ;
 
-varDecl::=
+ifDecl::=
+                    IF OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
+                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET ELSE OPENBRACKET
+                    graphDecl:gr2 CLOSEBRACKET                                  {: RESULT = new IfElSentence(gr, gr2, cond); :}
+                |   IF OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
+                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {: RESULT = new IfElSentence(gr, cond); :}
+                ;
 
+forDecl::=
+                    FOR OPENPARENTHESIS IDENTIFIER:id ASSIGN NUMBER:num SEMICOLON
+                    IDENTIFIER logicalOperators:logOp forCondition:fcond SEMICOLON IDENTIFIER
+                    passOperators:passOp CLOSEPARENTHESIS
+                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  RESULT = new ForSentence(gr, id, Integer.parseInt(num), logOp, fcond, passOp);:}
+                ;
+
+forCondition::=     NUMBER:num                                                  {:  RESULT = num;:}
+                |   IDENTIFIER:id                                               {:  RESULT = id; :}
+                ;
+
+whileDecl::=
+                    WHILE OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
+                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  RESULT = new WhileSentence(gr, cond);:}
+                ;
+
+doWhileDecl::=
+                    DOWHILE OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET WHILE
+                    OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
+                    SEMICOLON                                                   {:  RESULT = new DoSentence(gr, cond);:}
+                    ;
+
+conditionalDecl::=
+                |   NUMBER:num logicalOperators:op NUMBER:num2                  {:  RESULT = new Conditional(num, op.toString(), num2);:}
+                |   STRING:str logicalOperators:op STRING:str2                  {:  RESULT = new Conditional(parser.removeQuotes(str), op.toString(), parser.removeQuotes(str2));:}
+                |   TRUE
+                |   FALSE
+                ;
+vls::=              vars
                 |
                 ;
+vars::=
+                    IDENTIFIER:id varAssign                                     {:  parser.addSym(parser.removeQuotes(id), val);:}
+                |   vars IDENTIFIER:id varAssign                                {:  parser.addSym(parser.removeQuotes(id), val);:}
+                ;
+varAssign::=        ASSIGN varDecl:val                                          {:  RESULT = val;:}
+                |   passOperators:val                                           {:  RESULT = val;:}
+                |   passOperators:val NUMBER:val1                               {:  RESULT =id+val;:}
+                ;
+varDecl::=
+                    STRING:val SEMICOLON                                        {:  RESULT = val; :}
+                |   NUMBER:val SEMICOLON                                        {:  RESULT = val; :}
+                |   TRUE SEMICOLON                                              {:  RESULT = Boolean.TRUE;:}
+                |   FALSE SEMICOLON                                             {:  RESULT = Boolean.FALSE;:}
+                ;
 
-stringDeclaration::=
-                    IDENTIFIER:id ASSIGN STRING:val SEMICOLON                        {:  RESULT = new StringDeclaration(parser.removeQuotes(id), parser.removeQuotes(val));:}
+dataValue::=
+                    NUMBER:num                                                  {:  RESULT = Integer.parseInt(num);:}
+                |   multiplyData:mul                                            {:  RESULT = mul;:}
+                ;
+
+multiplyData::=     NUMBER:num ASTHERISK NUMBER:num2                            {:  RESULT = Integer.parseInt(num) * Integer.parseInt(num2);:}
+                |   NUMBER:num ASTHERISK IDENTIFIER:id                          {:  RESULT = Integer.parseInt(num) * parser.getIntValue(id);:}
+                |   IDENTIFIER:id ASTHERISK NUMBER:num                          {:  RESULT = parser.getIntValue(id) * Integer.parseInt(num);:}
+                |   IDENTIFIER:id ASTHERISK IDENTIFIER:id2                       {:  RESULT = parser.getIntValue(id) * parser.getIntValue(id2);:}
+                ;
+
+passOperators::=
+                    SUM:s                                                       {:  RESULT = s.toString();:}
+                |   SUB:s                                                       {:  RESULT = s.toString();:}
+                |   MUL:s                                                       {:  RESULT = s.toString();:}
+                |   DIV:s                                                       {:  RESULT = s.toString();:}
                 ;
 
 mathOperators::=
-                    PLUS
-                |   MINUS
-                |   ASTHERISK
-                |   DIVIDE
-                |   SUM
-                |   SUB
-                |   MUL
-                |   DIV
+                    PLUS:p                                                      {:  RESULT = p.toString();:}
+                |   MINUS:p                                                     {:  RESULT = p.toString();:}
+                |   ASTHERISK:p                                                 {:  RESULT = p.toString();:}
+                |   DIVIDE:p                                                    {:  RESULT = p.toString();:}
+                |   passOperators:p                                             {:  RESULT = p.toString();:}
                 ;
 
 logicalOperators::=
-                    EQUALS
-                |   DIFFERENT
-                |   GREATER
-                |   LESS
-                |   GREATEREQUAL
-                |   LESSEQUAL
+                    EQUALS:e                                                    {:  RESULT = e.toString();:}
+                |   DIFFERENT:e                                                 {:  RESULT = e.toString();:}
+                |   GREATER:e                                                   {:  RESULT = e.toString();:}
+                |   LESS:e                                                      {:  RESULT = e.toString();:}
+                |   GREATEREQUAL:e                                              {:  RESULT = e.toString();:}
+                |   LESSEQUAL:e                                                 {:  RESULT = e.toString();:}
                 ;
-

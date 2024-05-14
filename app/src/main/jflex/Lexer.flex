@@ -25,7 +25,7 @@ LETTER          = [a-zA-Z]
 STRING          = (\"([^\"]|[a-zA-Z]|(\s)|[0-9])+\")
 NUMBSIZE        = ([0-9]+)"px"
 HEXCODE         = ("\"#"[0-9a-fA-F]{6}"\"")
-IDENTIFIER      = (-|_|[a-zA-Z]|[a-zA-Z0-9])+"ID" /*| (-|_|[a-zA-Z]|[a-zA-Z0-9])+"id"*/
+IDENTIFIER      = (-|_|[a-zA-Z]|[a-zA-Z0-9])* "ID" /*| (-|_|[a-zA-Z]|[a-zA-Z0-9])+"id"*/
 //DECLARATIONS
 DATA            = "\"data\":"
 CATEGORY        = "\"category\":"
@@ -151,6 +151,8 @@ SINGLEQUOTE     = "\'"
 {FOR}                             {return symbol(ParserSym.FOR, yytext());}
 {WHILE}                           {return symbol(ParserSym.WHILE, yytext());}
 {DOWHILE}                         {return symbol(ParserSym.DOWHILE, yytext());}
+{TRUE}                            {return symbol(ParserSym.TRUE, yytext());}
+{FALSE}                           {return symbol(ParserSym.FALSE, yytext());}
 {EQUALS}                          {return symbol(ParserSym.EQUALS, yytext());}
 {DIFFERENT}                       {return symbol(ParserSym.DIFFERENT, yytext());}
 {GREATER}                         {return symbol(ParserSym.GREATER, yytext());}
@@ -170,15 +172,15 @@ SINGLEQUOTE     = "\'"
 {SINGLEQUOTE}                     {return symbol(ParserSym.SINGLEQUOTE, yytext());}
 {NUMBER}                          {return symbol(ParserSym.NUMBER, yytext());}
 {HEXCODE}                         {return symbol(ParserSym.HEXCODE, yytext());}
+{SUM}                             {return symbol(ParserSym.SUM, yytext());}
+{SUB}                             {return symbol(ParserSym.SUB, yytext());}
+{MUL}                             {return symbol(ParserSym.MUL, yytext());}
+{DIV}                             {return symbol(ParserSym.DIV, yytext());}
 {ASSIGN}                          {return symbol(ParserSym.ASSIGN, yytext());}
 {PLUS}                            {return symbol(ParserSym.PLUS, yytext());}
 {MINUS}                           {return symbol(ParserSym.MINUS, yytext());}
 {ASTHERISK}                       {return symbol(ParserSym.ASTHERISK, yytext());}
 {DIVIDE}                          {return symbol(ParserSym.DIVIDE, yytext());}
-{SUM}                             {return symbol(ParserSym.SUM, yytext());}
-{SUB}                             {return symbol(ParserSym.SUB, yytext());}
-{MUL}                             {return symbol(ParserSym.MUL, yytext());}
-{DIV}                             {return symbol(ParserSym.DIV, yytext());}
 {IDENTIFIER}                      {return symbol(ParserSym.IDENTIFIER, yytext());}
 {NUMBER}                          {return symbol(ParserSym.NUMBER, yytext());}
 {DIGIT}                           {return symbol(ParserSym.DIGIT, yytext());}

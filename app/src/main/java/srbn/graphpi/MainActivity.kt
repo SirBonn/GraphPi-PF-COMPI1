@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
                 intent.putExtra("Errors", parser.errors)
                 intent.putExtra("header", parser.header)
                 startActivity(intent)
+
             } else {
                 // El contexto de OtherActivity es nulo
             }
