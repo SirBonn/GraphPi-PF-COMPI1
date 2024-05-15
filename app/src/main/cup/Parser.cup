@@ -16,7 +16,7 @@ parser code{:
     private ArrayList<Graph> allGraps = new ArrayList<>();
     private ArrayList<Sentence> sentences = new ArrayList<>();
     private SymTable symTable = new SymTable();
-    private Header header;
+    private Header header = new Header();
 
     public void syntax_error(Symbol token) {
             if (token.sym != ParserSym.EOF){
@@ -108,7 +108,7 @@ parser code{:
 
 :}
 
-non terminal        graphPi, jsonDecl, sentencesDecl, varDecl, mathOperators,
+non terminal        graphPi, jsonDecl, sentencesDecl,
                     mathSentence, vars, vls, allDecl;
 
 non terminal        BarsGraph   barsGraphDecl;
@@ -117,7 +117,8 @@ non terminal        LinealGraph lineGraphDecl;
 non terminal        PlotGraph   plotGraphDecl;
 non terminal        Header      header;
 non terminal        Graph       graphTypes;
-non terminal        String headerDecl, footerDecl, forCondition, logicalOperators, passOperators, varAssign;
+non terminal        String headerDecl, footerDecl, forCondition, logicalOperators,
+                    passOperators, varDecl, varAssign, mathOperators;
 non terminal        Integer dataValue, multiplyData;
 non terminal        ArrayList<DataGraph> dataDecl, plotsData, linePoints, pieDataDecl;
 non terminal        ArrayList<LinealData> lineDataDecl;
@@ -345,7 +346,8 @@ forDecl::=
                     FOR OPENPARENTHESIS IDENTIFIER:id ASSIGN NUMBER:num SEMICOLON
                     IDENTIFIER logicalOperators:logOp forCondition:fcond SEMICOLON IDENTIFIER
                     passOperators:passOp CLOSEPARENTHESIS
-                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  RESULT = new ForSentence(gr, id, Integer.parseInt(num), logOp, fcond, passOp);:}
+                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  parser.addSym(parser.removeQuotes(id), num);
+                                                                                    RESULT = new ForSentence(gr, id, Integer.parseInt(num), logOp, fcond, passOp);:}
                 ;
 
 forCondition::=     NUMBER:num                                                  {:  RESULT = num;:}
@@ -364,8 +366,9 @@ doWhileDecl::=
                     ;
 
 conditionalDecl::=
-                |   NUMBER:num logicalOperators:op NUMBER:num2                  {:  RESULT = new Conditional(num, op.toString(), num2);:}
-                |   STRING:str logicalOperators:op STRING:str2                  {:  RESULT = new Conditional(parser.removeQuotes(str), op.toString(), parser.removeQuotes(str2));:}
+                |   NUMBER:num logicalOperators:op NUMBER:num2                  {:  RESULT = new Conditional(num, op.toString(), num2, true);:}
+                |   STRING:str logicalOperators:op STRING:str2                  {:  RESULT = new Conditional(parser.removeQuotes(str), op.toString(), parser.removeQuotes(str2), false);:}
+                |   IDENTIFIER:id logicalOperators:op NUMBER:num                {:  RESULT = new Conditional(id, op.toString(), num, true);:}
                 |   TRUE
                 |   FALSE
                 ;
@@ -373,18 +376,18 @@ vls::=              vars
                 |
                 ;
 vars::=
-                    IDENTIFIER:id varAssign                                     {:  parser.addSym(parser.removeQuotes(id), val);:}
-                |   vars IDENTIFIER:id varAssign                                {:  parser.addSym(parser.removeQuotes(id), val);:}
+                    IDENTIFIER:id varAssign:val                                     {:  parser.addSym(parser.removeQuotes(id), val);:}
+                |   vars IDENTIFIER:id varAssign:val                                {:  parser.addSym(parser.removeQuotes(id), val);:}
                 ;
 varAssign::=        ASSIGN varDecl:val                                          {:  RESULT = val;:}
-                |   passOperators:val                                           {:  RESULT = val;:}
-                |   passOperators:val NUMBER:val1                               {:  RESULT =id+val;:}
+                |   mathOperators:val SEMICOLON                                 {:  RESULT = val;:}
+                |   mathOperators:val NUMBER:val1 SEMICOLON                     {:  RESULT =val+val1;:}
                 ;
 varDecl::=
                     STRING:val SEMICOLON                                        {:  RESULT = val; :}
                 |   NUMBER:val SEMICOLON                                        {:  RESULT = val; :}
-                |   TRUE SEMICOLON                                              {:  RESULT = Boolean.TRUE;:}
-                |   FALSE SEMICOLON                                             {:  RESULT = Boolean.FALSE;:}
+                |   TRUE SEMICOLON                                              {:  RESULT = "true";:}
+                |   FALSE SEMICOLON                                             {:  RESULT = "false";:}
                 ;
 
 dataValue::=
@@ -395,7 +398,7 @@ dataValue::=
 multiplyData::=     NUMBER:num ASTHERISK NUMBER:num2                            {:  RESULT = Integer.parseInt(num) * Integer.parseInt(num2);:}
                 |   NUMBER:num ASTHERISK IDENTIFIER:id                          {:  RESULT = Integer.parseInt(num) * parser.getIntValue(id);:}
                 |   IDENTIFIER:id ASTHERISK NUMBER:num                          {:  RESULT = parser.getIntValue(id) * Integer.parseInt(num);:}
-                |   IDENTIFIER:id ASTHERISK IDENTIFIER:id2                       {:  RESULT = parser.getIntValue(id) * parser.getIntValue(id2);:}
+                |   IDENTIFIER:id ASTHERISK IDENTIFIER:id2                      {:  RESULT = parser.getIntValue(id) * parser.getIntValue(id2);:}
                 ;
 
 passOperators::=
