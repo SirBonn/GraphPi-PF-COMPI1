@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/export_pdf"
+        android:title="Exportar a PDF" />
+    <item
+        android:id="@+id/export_html"
+        android:title="Exportar a HTML" />
+    <item
+        android:id="@+id/export_images"
+        android:title="guardar como imagenes" />
+    <item
+        android:id="@+id/show_report"
+        android:title="Ver reporte de errores" />
+</menu>

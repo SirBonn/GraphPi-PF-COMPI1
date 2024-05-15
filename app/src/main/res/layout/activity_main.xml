@@ -51,7 +51,7 @@
         android:layout_height="61dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="28dp"
-        android:text="Reports"
+        android:text="Guardar archivo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/compileButton" />
 
@@ -74,5 +74,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="637dp" />
+
+    <TextView
+        android:id="@+id/column_number"
+        android:layout_width="130dp"
+        android:layout_height="23dp"
+        android:text="Columna:  "
+        android:textSize="18dp"
+        android:gravity="left"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_editor_absoluteY="-1dp" />
+
+    <Button
+        android:id="@+id/new_file_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Crear\nNuevo"
+        app:layout_constraintEnd_toStartOf="@+id/saveFileButton"
+        app:layout_constraintHorizontal_bias="0.583"
+        app:layout_constraintStart_toEndOf="@+id/openFileButton"
+        app:layout_constraintTop_toBottomOf="@+id/compileButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
