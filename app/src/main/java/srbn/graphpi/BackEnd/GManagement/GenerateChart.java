@@ -6,6 +6,7 @@ import android.service.autofill.Dataset;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import srbn.graphpi.BackEnd.DomainObjs.Errors.*;
 import srbn.graphpi.BackEnd.DomainObjs.Graphs.*;
@@ -53,6 +54,7 @@ public class GenerateChart implements Serializable {
 
     public void createCharts() {
         for (Graph graph : graphs) {
+            layout.addView(new TextView(context));
             createChart(graph);
         }
     }

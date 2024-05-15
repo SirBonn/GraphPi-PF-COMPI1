@@ -7,11 +7,33 @@
     android:layout_height="match_parent"
     tools:context=".ShowGraphsActivity">
 
+    <Button
+        android:id="@+id/exportButton"
+        android:layout_width="150dp"
+        android:layout_height="46dp"
+        android:text="Exportar"
+        app:layout_constraintBottom_toTopOf="@+id/scrollView2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/titleTextView"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="249dp"
+        android:layout_height="43dp"
+        android:layout_gravity="left"
+        android:background="@color/a"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ScrollView
-        android:layout_width="413dp"
-        android:layout_height="729dp"
-        tools:layout_editor_absoluteX="-1dp"
-        tools:layout_editor_absoluteY="1dp">
+        android:id="@+id/scrollView2"
+        android:layout_width="414dp"
+        android:layout_height="774dp"
+        app:layout_constraintTop_toBottomOf="@+id/titleTextView"
+        tools:layout_editor_absoluteX="-2dp">
 
         <LinearLayout
             android:id="@+id/graphs_activity_layout"
@@ -21,30 +43,22 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/titleTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="left"
-                android:textColor="@color/white"
-                android:background="@color/a"
-                android:textSize="20dp"/>
-
-            <TextView
                 android:id="@+id/descTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
-                android:textColor="@color/white"
                 android:background="@color/a"
-                android:textSize="15dp"/>
+                android:textColor="@color/white"
+                android:textSize="15dp" />
+
             <TextView
                 android:id="@+id/keysTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
-                android:textColor="@color/white"
                 android:background="@color/a"
-                android:textSize="15dp"/>
+                android:textColor="@color/white"
+                android:textSize="15dp" />
 
         </LinearLayout>
 
