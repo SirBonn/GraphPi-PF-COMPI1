@@ -9,6 +9,8 @@ import android.widget.LinearLayout;
 
 import srbn.graphpi.BackEnd.DomainObjs.Errors.*;
 import srbn.graphpi.BackEnd.DomainObjs.Graphs.*;
+import srbn.graphpi.BackEnd.DomainObjs.Sentences.Sentence;
+import srbn.graphpi.BackEnd.DomainObjs.SymTable;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -42,7 +44,7 @@ public class GenerateChart implements Serializable {
 
     private LinearLayout layout;
     private ArrayList<Graph> graphs;
-
+    private ArrayList<ErrorP> errors;
     private Context context;
 
     public GenerateChart(ArrayList<Graph> graphs) {
@@ -51,30 +53,34 @@ public class GenerateChart implements Serializable {
 
     public void createCharts() {
         for (Graph graph : graphs) {
-            switch (graph.getType()) {
-                case 1:
-                    assert graph instanceof BarsGraph;
-                    layout.addView(createChartBar((BarsGraph) graph), 800, 800);
-                    break;
-                case 2:
-                    assert graph instanceof PlotGraph;
-                    layout.addView(createChartPlot((PlotGraph) graph), 800, 800);
-                    break;
-                case 3:
-                    assert graph instanceof LinealGraph;
-                    layout.addView(createChartLineal((LinealGraph) graph), 800, 800);
-                    break;
-                case 4:
-                    assert graph instanceof PieGraph;
-                    layout.addView(createChartPie((PieGraph) graph), 800, 800);
-                    break;
-                default:
-                    System.out.println("Graph type not found");
-                    break;
-            }
+            createChart(graph);
         }
     }
 
+    public void createChart(Graph graph) {
+        switch (graph.getType()) {
+            case 1:
+                assert graph instanceof BarsGraph;
+                layout.addView(createChartBar((BarsGraph) graph), 800, 800);
+                break;
+            case 2:
+                assert graph instanceof PlotGraph;
+                layout.addView(createChartPlot((PlotGraph) graph), 800, 800);
+                break;
+            case 3:
+                assert graph instanceof LinealGraph;
+                layout.addView(createChartLineal((LinealGraph) graph), 800, 800);
+                break;
+            case 4:
+                assert graph instanceof PieGraph;
+                layout.addView(createChartPie((PieGraph) graph), 800, 800);
+                break;
+            default:
+                System.out.println("Graph type not found");
+                errors.add(new ErrorP("Graph type not found, " + graph.getData()));
+                break;
+        }
+    }
     private ScatterChart createChartPlot(PlotGraph graph) {
         ScatterChart scatterChart = new ScatterChart(context);
         ArrayList<IScatterDataSet> dataSets = new ArrayList<>();
@@ -86,18 +92,17 @@ public class GenerateChart implements Serializable {
 
             entries.add(new Entry((float) data.getX(), (float) data.getY()));
             ScatterDataSet dataSet = new ScatterDataSet(entries, data.getName());
-            if(data.getColor() != null) {
+            if (data.getColor() != null) {
                 dataSet.setColor(Color.parseColor(data.getColor()));
             } else {
                 dataSet.setColor(ColorTemplate.COLORFUL_COLORS[j]);
             }
-            if(data.getSize() != 0) {
+            if (data.getSize() != 0) {
                 dataSet.setScatterShapeHoleRadius((float) data.getSize());
             }
             dataSets.add(dataSet);
             j++;
         }
-
 
 
         scatterChart.setData(new ScatterData(dataSets));
@@ -211,12 +216,13 @@ public class GenerateChart implements Serializable {
         return barChart;
     }
 
-
-    public void setContext(Context context) {
+    public void setupGenerator(Context context, LinearLayout layout, ArrayList<ErrorP> errors) {
         this.context = context;
+        this.layout = layout;
+        this.errors = errors;
     }
 
-    public void setLayout(LinearLayout layout) {
-        this.layout = layout;
+    public ArrayList<ErrorP> getErrors() {
+        return errors;
     }
 }

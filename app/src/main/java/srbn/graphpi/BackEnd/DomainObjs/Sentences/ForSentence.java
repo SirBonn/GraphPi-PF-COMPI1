@@ -52,4 +52,12 @@ public class ForSentence extends Sentence implements java.io.Serializable {
     public void setPassOp(String passOp) {
         this.passOp = passOp;
     }
+
+    public int getInit() {
+        return init;
+    }
+
+    public void setInit(int init) {
+        this.init = init;
+    }
 }

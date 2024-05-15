@@ -46,6 +46,17 @@ public class Header implements Serializable {
         return keys;
     }
 
+    public String getKeysString() { //todo: make this a better string
+
+        String returnString = "";
+
+        for (String key : keys) {
+            returnString += "\t-"+key + "\n";
+        }
+
+        return returnString;
+    }
+
     public String getHeader() {
         return header;
     }

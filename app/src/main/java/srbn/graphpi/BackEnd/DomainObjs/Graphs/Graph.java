@@ -28,6 +28,8 @@ public class Graph implements Serializable {
         this.data = data;
     }
 
+
+
     public int getType() {
         return type;
     }

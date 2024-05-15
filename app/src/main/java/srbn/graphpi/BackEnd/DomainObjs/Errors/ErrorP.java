@@ -22,6 +22,10 @@ public class ErrorP implements Serializable {
         this.expectedSymbols = expectedSymbols;
     }
 
+    public ErrorP(String message){
+        this.message = message;
+    }
+
     public ErrorP(int line, int column, String content, int typeError, String message) {
         this.line = line;
         this.column = column;

@@ -46,17 +46,16 @@ class MainActivity : AppCompatActivity() {
             lexer = Lexer(inputCode)
             parser = Parser(lexer)
             parser.parse()
-            if (parser.graphs.isNotEmpty()) {
-                val generateChart = GenerateChart(parser.graphs)
-                val intent = Intent(this, ShowGraphsActivity::class.java)
-                intent.putExtra("chartGenerator", generateChart)
-                intent.putExtra("Errors", parser.errors)
-                intent.putExtra("header", parser.header)
-                startActivity(intent)
 
-            } else {
-                // El contexto de OtherActivity es nulo
-            }
+            val generateChart = GenerateChart(parser.graphs)
+            val intent = Intent(this, ShowGraphsActivity::class.java)
+            intent.putExtra("chartGenerator", generateChart)
+            intent.putExtra("Errors", parser.errors)
+            intent.putExtra("header", parser.header)
+            intent.putExtra("sentences", parser.sentences)
+            intent.putExtra("symbolTable", parser.symTable)
+            startActivity(intent)
+
 
         } catch (e: Exception) {
             println("Error: ${e.message}")
