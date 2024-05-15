@@ -49,7 +49,7 @@ public class SentencesManager {
 
         String idVar = forSentence.getIdVar();
         String logicOp = forSentence.getLogicOp();
-        int finalValue = getIntValue(forSentence.getForCondition());
+        Float finalValue = getIntValue(forSentence.getForCondition());
         String passOp = forSentence.getPassOp();
 
         while (valuateCondition(logicOp, idVar, finalValue)) {
@@ -100,7 +100,7 @@ public class SentencesManager {
         }
     }
 
-    private boolean valuateCondition(String logicOp, String idVar, int finalValue) {
+    private boolean valuateCondition(String logicOp, String idVar, Float finalValue) {
         switch (logicOp) {
             case "<":
                 return getIntValue(idVar) < finalValue;
@@ -163,18 +163,18 @@ public class SentencesManager {
         }
     }
 
-    private int getIntValue(String var) {
+    private Float getIntValue(String var) {
 
         if (symTable.containsVar(var)) {
-            return Integer.parseInt(symTable.getVar(var).toString());
+            return Float.parseFloat(symTable.getVar(var).toString());
         } else {
             //add errorP, variable not found, value returned is 0
             try {
-                return Integer.parseInt(var);
+                return Float.parseFloat(var);
             } catch (NumberFormatException e) {
                 generateChart.getErrors().add(new ErrorP("Variable not found, " + var));
             }
-            return 0;
+            return 0f;
         }
     }
 

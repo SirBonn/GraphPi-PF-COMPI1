@@ -5,36 +5,36 @@ import java.io.Serializable;
 public class DataGraph implements Serializable {
 
     private String name;
-    private int value;
+    private Float value;
     private String color;
-    private int size;
-    private int x;
-    private int y;
+    private Float size;
+    private Float x;
+    private Float y;
 
 
-    public DataGraph(String name, int value, String color) {
+    public DataGraph(String name, Float value, String color) {
         this.name = name;
         this.value = value;
         this.color = color;
     }
 
-    public DataGraph(String name, int value) {
+    public DataGraph(String name, Float value) {
         this.name = name;
         this.value = value;
     }
 
-    public DataGraph(int x, int y) {
+    public DataGraph(Float x, Float y) {
         this.x = x;
         this.y = y;
     }
 
-    public DataGraph(int x, int y, String name) {
+    public DataGraph(Float x, Float y, String name) {
         this.x = x;
         this.y = y;
         this.name = name;
     }
 
-    public DataGraph(int x, int y, int size, String color) {
+    public DataGraph(Float x, Float y, Float size, String color) {
         this.x = x;
         this.y = y;
         this.size = size;
@@ -49,11 +49,11 @@ public class DataGraph implements Serializable {
         this.name = name;
     }
 
-    public int getValue() {
+    public Float getValue() {
         return value;
     }
 
-    public void setValue(int value) {
+    public void setValue(Float value) {
         this.value = value;
     }
 
@@ -65,27 +65,27 @@ public class DataGraph implements Serializable {
         this.color = color;
     }
 
-    public int getX() {
+    public Float getX() {
         return x;
     }
 
-    public void setX(int x) {
+    public void setX(Float x) {
         this.x = x;
     }
 
-    public int getY() {
+    public Float getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(Float y) {
         this.y = y;
     }
 
-    public int getSize() {
+    public Float getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(Float size) {
         this.size = size;
     }
 }

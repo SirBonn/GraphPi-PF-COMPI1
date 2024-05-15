@@ -90,7 +90,7 @@ public class GenerateChart implements Serializable {
             j = (j > 4) ? 0 : j;
             ArrayList<Entry> entries = new ArrayList<>();
 
-            entries.add(new Entry((float) data.getX(), (float) data.getY()));
+            entries.add(new Entry( data.getX(), data.getY()));
             ScatterDataSet dataSet = new ScatterDataSet(entries, data.getName());
             if (data.getColor() != null) {
                 dataSet.setColor(Color.parseColor(data.getColor()));
@@ -98,7 +98,7 @@ public class GenerateChart implements Serializable {
                 dataSet.setColor(ColorTemplate.COLORFUL_COLORS[j]);
             }
             if (data.getSize() != 0) {
-                dataSet.setScatterShapeHoleRadius((float) data.getSize());
+                dataSet.setScatterShapeHoleRadius( data.getSize());
             }
             dataSets.add(dataSet);
             j++;
@@ -124,7 +124,7 @@ public class GenerateChart implements Serializable {
             ArrayList<Entry> entries = new ArrayList<>();
 
             for (DataGraph data : ld.getData()) {
-                entries.add(new Entry((float) data.getX(), (float) data.getY()));
+                entries.add(new Entry(data.getX(),  data.getY()));
             }
 
             LineDataSet dataSet = new LineDataSet(entries, ld.getName());
@@ -166,7 +166,7 @@ public class GenerateChart implements Serializable {
         PieDataSet dataSet = null;
 
         for (DataGraph data : graph.getData()) {
-            entries.add(new PieEntry((float) data.getValue(), data.getName()));
+            entries.add(new PieEntry(data.getValue(), data.getName()));
         }
 
         if (graph.getChartGraph() == null) {

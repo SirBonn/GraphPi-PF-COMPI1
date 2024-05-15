@@ -7,12 +7,12 @@ import srbn.graphpi.BackEnd.DomainObjs.Graphs.Graph;
 public class ForSentence extends Sentence implements java.io.Serializable {
 
     private String idVar;
-    private int init;
+    private Float init;
     private String logicOp;
     private String forCondition;
     private String passOp;
 
-    public ForSentence(ArrayList<Graph> graphs, String idVar, int init, String logicOp, String forCondition, String passOp) {
+    public ForSentence(ArrayList<Graph> graphs, String idVar, Float init, String logicOp, String forCondition, String passOp) {
         super(graphs, 1);
         this.idVar = idVar;
         this.init = init;
@@ -53,11 +53,11 @@ public class ForSentence extends Sentence implements java.io.Serializable {
         this.passOp = passOp;
     }
 
-    public int getInit() {
+    public Float getInit() {
         return init;
     }
 
-    public void setInit(int init) {
+    public void setInit(Float init) {
         this.init = init;
     }
 }
