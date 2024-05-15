@@ -35,4 +35,8 @@ public class SymTable implements Serializable {
         symTable.replace(name, value);
     }
 
+    public HashMap<String, Object> getSymTable() {
+        return symTable;
+    }
+
 }

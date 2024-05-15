@@ -60,10 +60,10 @@ public class SentencesManager {
         }
     }
 
-    private boolean valuateCondition(Conditional condition){
-        if(!condition.isNumericOp()){
+    private boolean valuateCondition(Conditional condition) {
+        if (!condition.isNumericOp()) {
             return valuateCondition(condition.getComparable(), condition.getComparator());
-        }else{
+        } else {
             return valuateCondition(condition.getLogicalSym(), condition.getComparator(), getIntValue(condition.getComparable()));
         }
     }
@@ -77,7 +77,25 @@ public class SentencesManager {
                 symTable.updateVar(idVar, getIntValue(idVar) - 1);
                 break;
             default:
-                generateChart.getErrors().add(new ErrorP("Pass operation not found, " + passOp));
+                if (passOp.startsWith("-=") | passOp.startsWith("=-")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) - getIntValue(passOp.substring(2)));
+                } else if (passOp.startsWith("+=") | passOp.startsWith("=+")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) + getIntValue(passOp.substring(2)));
+                } else if (passOp.startsWith("*=") | passOp.startsWith("=*")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) * getIntValue(passOp.substring(2)));
+                } else if (passOp.startsWith("/=") | passOp.startsWith("=/")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) / getIntValue(passOp.substring(2)));
+                } else if (passOp.startsWith("+")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) + getIntValue(passOp.substring(1)));
+                } else if (passOp.startsWith("-")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) - getIntValue(passOp.substring(1)));
+                } else if (passOp.startsWith("*")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) * getIntValue(passOp.substring(1)));
+                } else if (passOp.startsWith("/")) {
+                    symTable.updateVar(idVar, getIntValue(idVar) / getIntValue(passOp.substring(1)));
+                } else {
+                    generateChart.getErrors().add(new ErrorP("Invalid operation, " + passOp));
+                }
                 break;
         }
     }
@@ -118,11 +136,21 @@ public class SentencesManager {
     }
 
     public void executeDoSentence(DoSentence doSentence) {
-        //TODO
+        do {
+            for (Graph graph : doSentence.getGraphs()) {
+                generateChart.createChart(graph);
+            }
+            updateValue(doSentence.getConditional().getComparator(), doSentence.getSymTable().getVar(doSentence.getConditional().getComparator()).toString());
+        } while (valuateCondition(doSentence.getConditional()));
     }
 
     public void executeWhileSentence(WhileSentence whileSentence) {
-        //TODO
+        while (valuateCondition(whileSentence.getConditional())) {
+            for (Graph graph : whileSentence.getGraphs()) {
+                generateChart.createChart(graph);
+            }
+            updateValue(whileSentence.getConditional().getComparator(), whileSentence.getSymTable().getVar(whileSentence.getConditional().getComparator()).toString());
+        }
     }
 
     private String getStrValue(String var) {
