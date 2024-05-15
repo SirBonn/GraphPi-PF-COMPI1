@@ -45,7 +45,11 @@ parser code{:
         }
 
         public void addSym(String id, Object val){
-            symTable.addVar(id, val);
+            if(!symTable.containsVar(id)){
+                symTable.addVar(id, val);
+            }else {
+                addError(new Symbol(0, 0, 0), "Error: " + id + " is already declared");
+            }
         }
 
         public void addSentence(Sentence s){
@@ -109,7 +113,7 @@ parser code{:
 :}
 
 non terminal        graphPi, jsonDecl, sentencesDecl,
-                    mathSentence, vars, vls, allDecl;
+                    mathSentence, allDecl;
 
 non terminal        BarsGraph   barsGraphDecl;
 non terminal        PieGraph    pieGraphDecl, infoCard;
@@ -117,6 +121,7 @@ non terminal        LinealGraph lineGraphDecl;
 non terminal        PlotGraph   plotGraphDecl;
 non terminal        Header      header;
 non terminal        Graph       graphTypes;
+non terminal        SymTable    vars, vls;
 non terminal        String headerDecl, footerDecl, forCondition, logicalOperators,
                     passOperators, varDecl, varAssign, mathOperators;
 non terminal        Integer dataValue, multiplyData;
@@ -356,13 +361,13 @@ forCondition::=     NUMBER:num                                                  
 
 whileDecl::=
                     WHILE OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
-                    OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  RESULT = new WhileSentence(gr, cond);:}
+                    OPENBRACKET vls:s graphDecl:gr vls:s2 CLOSEBRACKET               {:  RESULT = new WhileSentence(gr, cond, s, s2);:}
                 ;
 
 doWhileDecl::=
-                    DOWHILE OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET WHILE
+                    DOWHILE OPENBRACKET vls:s graphDecl:gr vls:s2 CLOSEBRACKET WHILE
                     OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
-                    SEMICOLON                                                   {:  RESULT = new DoSentence(gr, cond);:}
+                    SEMICOLON                                                   {:  RESULT = new DoSentence(gr, cond, s, s2);:}
                     ;
 
 conditionalDecl::=
@@ -372,15 +377,19 @@ conditionalDecl::=
                 |   TRUE
                 |   FALSE
                 ;
-vls::=              vars
-                |
+vls::=              vars:st                                                     {:  RESULT = st;  :}
+                |                                                               {:  RESULT = null;:}
                 ;
 vars::=
-                    IDENTIFIER:id varAssign:val                                     {:  parser.addSym(parser.removeQuotes(id), val);:}
-                |   vars IDENTIFIER:id varAssign:val                                {:  parser.addSym(parser.removeQuotes(id), val);:}
+                    IDENTIFIER:id ASSIGN varDecl:val                            {:  parser.addSym(parser.removeQuotes(id), val);:}
+                |   vars IDENTIFIER:id ASSIGN varDecl:val                       {:  parser.addSym(parser.removeQuotes(id), val);:}
+                |   vars:st IDENTIFIER:id varAssign:val                         {:  st.addVar(parser.removeQuotes(id), val);
+                                                                                    RESULT = st; :}
+                |   IDENTIFIER:id varAssign:val                                 {:  SymTable st = new SymTable();
+                                                                                    st.addVar(parser.removeQuotes(id), val);
+                                                                                    RESULT = st; :}
                 ;
-varAssign::=        ASSIGN varDecl:val                                          {:  RESULT = val;:}
-                |   mathOperators:val SEMICOLON                                 {:  RESULT = val;:}
+varAssign::=        mathOperators:val SEMICOLON                                 {:  RESULT = val;:}
                 |   mathOperators:val NUMBER:val1 SEMICOLON                     {:  RESULT =val+val1;:}
                 ;
 varDecl::=
