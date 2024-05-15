@@ -39,9 +39,19 @@ parser code{:
             }
 
         public void addGraphs(ArrayList<Graph> gr){
+          if(gr != null){
             for(Graph g : gr){
                 allGraps.add(g);
             }
+          }
+        }
+
+        public void addGraphs(Graph gr){
+          if(gr != null){
+
+                allGraps.add(gr);
+
+          }
         }
 
         public void addSym(String id, Object val){
@@ -68,12 +78,12 @@ parser code{:
             }
         }
 
-        public int getIntValue(String id){
-            if(symTable.getVar(id) instanceof Integer){
-                return (int)symTable.getVar(id);
+        public Float getValueF(String id){
+            if(symTable.getVar(id) instanceof Float){
+                return (Float)symTable.getVar(id);
             }else{
                 addError(new Symbol(0, 0, 0), "Error: " + id + " is not a number");
-                return 0;
+                return 0f;
             }
         }
 
@@ -123,8 +133,8 @@ non terminal        Header      header;
 non terminal        Graph       graphTypes;
 non terminal        SymTable    vars, vls;
 non terminal        String headerDecl, footerDecl, forCondition, logicalOperators,
-                    passOperators, varDecl, varAssign, mathOperators;
-non terminal        Integer dataValue, multiplyData;
+                    passOperators, varDecl, varAssign, mathOperators, numberD;
+non terminal        Float dataValue, multiplyData, sumatoryData, substractionData, divissorData;
 non terminal        ArrayList<DataGraph> dataDecl, plotsData, linePoints, pieDataDecl;
 non terminal        ArrayList<LinealData> lineDataDecl;
 non terminal        ArrayList<String> keywordsDecl;
@@ -146,7 +156,7 @@ terminal            DATA, CATEGORY, NAME, TITTLE, POINTS, VALUE, LABEL, COLOR, X
                     PLUS, MINUS, ASTHERISK, DIVIDE, SUM, SUB, ASSIGN, MUL, DIV,
                     EQUALS, DIFFERENT, GREATER, LESS, GREATEREQUAL, LESSEQUAL;
 
-terminal            String DIGIT, NUMBER, LETTER, STRING, HEXCODE, NUMBSIZE, IDENTIFIER;
+terminal            String DIGIT, NUMBER, DECIMAL, LETTER, STRING, HEXCODE, NUMBSIZE, IDENTIFIER;
 
 start with          graphPi;
 
@@ -162,7 +172,7 @@ header::=           TITTLE STRING:tittle COMMA DESCRIPTION STRING:desc COMMA
                     BACKGROUNDCOLOR HEXCODE:back COMMA FONTFAMILY STRING:font COMMA
                     FONTSIZE STRING:fontSize                                    {:  parser.setHeader(new Header(tittle, desc, keys, header, footer, back, font, fontSize));:}
                 |                                                               {:  parser.setHeader(new Header());:}
-                |   error                                                       {::}
+//                |   error                                                       {::}
                 ;
 
 keywordsDecl::=     STRING:word                                                 {:  ArrayList<String> keys = new ArrayList<>();
@@ -181,16 +191,17 @@ footerDecl::=       COPYRIGHT STRING:copy                                       
 
 jsonDecl::=
                     graphDecl:graphs                                            {:  parser.addGraphs(graphs);:}
-                |   vls sentencesDecl
+                |   vls
                 ;
 
 graphDecl::=
                     graphDecl:grs vls OPENBRACKET DATA OPENBRACE OPENBRACKET
-                    graphTypes:gr vls CLOSEBRACKET                              {: grs.add(gr); RESULT = grs;:}
+                    graphTypes:gr vls CLOSEBRACKET                              {: grs.add(gr); /*parser.addGraphs(gr);*/ RESULT = grs;:}
                 |   OPENBRACKET DATA OPENBRACE OPENBRACKET graphTypes:gr
-                    CLOSEBRACKET                                                {: ArrayList<Graph> grs = new ArrayList<Graph>();
-                                                                                   grs.add(gr); RESULT = grs;:}
-
+                    vls CLOSEBRACKET                                            {: ArrayList<Graph> grs = new ArrayList<Graph>();
+                                                                                   grs.add(gr); /*parser.addGraphs(gr);*/ RESULT = grs;:}
+                |   sentencesDecl                                               {:RESULT = new ArrayList<Graph>();:}
+                |   graphDecl:grs vls sentencesDecl                             {:RESULT = grs;:}
                 ;
 
 graphTypes::=
@@ -280,16 +291,16 @@ plotsData::=
                     Xaxis dataValue:x COMMA Yaxis dataValue:y  CLOSEBRACKET     {:  ArrayList<DataGraph> data = new ArrayList<>();
                                                                                     data.add(new DataGraph(x, y));
                                                                                     RESULT = data;                                  :}
-                |   Xaxis dataValue:x COMMA Yaxis dataValue:y COMMA SIZE NUMBER:s
+                |   Xaxis dataValue:x COMMA Yaxis dataValue:y COMMA SIZE numberD:s
                     COMMA COLOR HEXCODE:col CLOSEBRACKET                        {:  ArrayList<DataGraph> data = new ArrayList<>();
-                                                                                    data.add(new DataGraph(x, y, Integer.parseInt(s), parser.removeQuotes(col)));
+                                                                                    data.add(new DataGraph(x, y, Float.parseFloat(s), parser.removeQuotes(col)));
                                                                                     RESULT = data;                                  :}
                 |   plotsData:points COMMA OPENBRACKET  Xaxis dataValue:x COMMA Yaxis
                     dataValue:y    CLOSEBRACKET                                 {:  points.add(new DataGraph(x, y));
                                                                                     RESULT = points;                                :}
                 |   plotsData:points COMMA OPENBRACKET  Xaxis dataValue:x COMMA Yaxis
-                    dataValue:y  COMMA SIZE NUMBER:s COMMA COLOR HEXCODE:col
-                    CLOSEBRACKET                                                {:  points.add(new DataGraph(x, y, Integer.parseInt(s), parser.removeQuotes(col)));
+                    dataValue:y  COMMA SIZE numberD:s COMMA COLOR HEXCODE:col
+                    CLOSEBRACKET                                                {:  points.add(new DataGraph(x, y, Float.parseFloat(s), parser.removeQuotes(col)));
                                                                                     RESULT = points;                                :}
                 ;
 
@@ -337,6 +348,7 @@ sentencesDecl::=
                 |   whileDecl:whileSent                                         {:  parser.addSentence(whileSent);:}
                 |   forDecl:forSent                                             {:  parser.addSentence(forSent);:}
                 |   doWhileDecl:dowhileSent                                     {:  parser.addSentence(dowhileSent);:}
+                |   error                                                       {::}
                 ;
 
 ifDecl::=
@@ -348,20 +360,20 @@ ifDecl::=
                 ;
 
 forDecl::=
-                    FOR OPENPARENTHESIS IDENTIFIER:id ASSIGN NUMBER:num SEMICOLON
+                    FOR OPENPARENTHESIS IDENTIFIER:id ASSIGN numberD:num SEMICOLON
                     IDENTIFIER logicalOperators:logOp forCondition:fcond SEMICOLON IDENTIFIER
                     passOperators:passOp CLOSEPARENTHESIS
                     OPENBRACKET vls graphDecl:gr vls CLOSEBRACKET               {:  parser.addSym(parser.removeQuotes(id), num);
-                                                                                    RESULT = new ForSentence(gr, id, Integer.parseInt(num), logOp, fcond, passOp);:}
+                                                                                    RESULT = new ForSentence(gr, id, Float.parseFloat(num), logOp, fcond, passOp);:}
                 ;
 
-forCondition::=     NUMBER:num                                                  {:  RESULT = num;:}
+forCondition::=     numberD:num                                                 {:  RESULT = num;:}
                 |   IDENTIFIER:id                                               {:  RESULT = id; :}
                 ;
 
 whileDecl::=
                     WHILE OPENPARENTHESIS conditionalDecl:cond CLOSEPARENTHESIS
-                    OPENBRACKET vls:s graphDecl:gr vls:s2 CLOSEBRACKET               {:  RESULT = new WhileSentence(gr, cond, s, s2);:}
+                    OPENBRACKET vls:s graphDecl:gr vls:s2 CLOSEBRACKET          {:  RESULT = new WhileSentence(gr, cond, s, s2);:}
                 ;
 
 doWhileDecl::=
@@ -371,9 +383,9 @@ doWhileDecl::=
                     ;
 
 conditionalDecl::=
-                |   NUMBER:num logicalOperators:op NUMBER:num2                  {:  RESULT = new Conditional(num, op.toString(), num2, true);:}
+                |   numberD:num logicalOperators:op numberD:num2                {:  RESULT = new Conditional(num, op.toString(), num2, true);:}
                 |   STRING:str logicalOperators:op STRING:str2                  {:  RESULT = new Conditional(parser.removeQuotes(str), op.toString(), parser.removeQuotes(str2), false);:}
-                |   IDENTIFIER:id logicalOperators:op NUMBER:num                {:  RESULT = new Conditional(id, op.toString(), num, true);:}
+                |   IDENTIFIER:id logicalOperators:op numberD:num               {:  RESULT = new Conditional(id, op.toString(), num, true);:}
                 |   TRUE
                 |   FALSE
                 ;
@@ -390,24 +402,45 @@ vars::=
                                                                                     RESULT = st; :}
                 ;
 varAssign::=        mathOperators:val SEMICOLON                                 {:  RESULT = val;:}
-                |   mathOperators:val NUMBER:val1 SEMICOLON                     {:  RESULT =val+val1;:}
+                |   mathOperators:val numberD:val1 SEMICOLON                    {:  RESULT =val+val1;:}
                 ;
 varDecl::=
                     STRING:val SEMICOLON                                        {:  RESULT = val; :}
-                |   NUMBER:val SEMICOLON                                        {:  RESULT = val; :}
+                |   numberD:val SEMICOLON                                       {:  RESULT = val; :}
                 |   TRUE SEMICOLON                                              {:  RESULT = "true";:}
                 |   FALSE SEMICOLON                                             {:  RESULT = "false";:}
                 ;
 
 dataValue::=
-                    NUMBER:num                                                  {:  RESULT = Integer.parseInt(num);:}
+                    numberD:num                                                 {:  RESULT = Float.parseFloat(num);:}
                 |   multiplyData:mul                                            {:  RESULT = mul;:}
+                |   sumatoryData:sum                                            {:  RESULT = sum;:}
+                |   substractionData:sub                                        {:  RESULT = sub;:}
+                |   divissorData:div                                            {:  RESULT = div;:}
                 ;
 
-multiplyData::=     NUMBER:num ASTHERISK NUMBER:num2                            {:  RESULT = Integer.parseInt(num) * Integer.parseInt(num2);:}
-                |   NUMBER:num ASTHERISK IDENTIFIER:id                          {:  RESULT = Integer.parseInt(num) * parser.getIntValue(id);:}
-                |   IDENTIFIER:id ASTHERISK NUMBER:num                          {:  RESULT = parser.getIntValue(id) * Integer.parseInt(num);:}
-                |   IDENTIFIER:id ASTHERISK IDENTIFIER:id2                      {:  RESULT = parser.getIntValue(id) * parser.getIntValue(id2);:}
+sumatoryData::=     numberD:num PLUS numberD:num2                               {:  RESULT = Float.parseFloat(num) + Float.parseFloat(num2);:}
+                |   numberD:num PLUS IDENTIFIER:id                              {:  RESULT = Float.parseFloat(num) + parser.getValueF(id);:}
+                |   IDENTIFIER:id PLUS numberD:num                              {:  RESULT = parser.getValueF(id) + Float.parseFloat(num);:}
+                |   IDENTIFIER:id PLUS IDENTIFIER:id2                           {:  RESULT = parser.getValueF(id) + parser.getValueF(id2);:}
+                ;
+
+substractionData::= numberD:num SUB numberD:num2                                {:  RESULT = Float.parseFloat(num) - Float.parseFloat(num2);:}
+                |   numberD:num SUB IDENTIFIER:id                               {:  RESULT = Float.parseFloat(num) - parser.getValueF(id);:}
+                |   IDENTIFIER:id SUB numberD:num                               {:  RESULT = parser.getValueF(id) - Float.parseFloat(num);:}
+                |   IDENTIFIER:id SUB IDENTIFIER:id2                            {:  RESULT = parser.getValueF(id) - parser.getValueF(id2);:}
+                ;
+
+multiplyData::=     numberD:num ASTHERISK numberD:num2                          {:  RESULT = Float.parseFloat(num) * Float.parseFloat(num2);:}
+                |   numberD:num ASTHERISK IDENTIFIER:id                         {:  RESULT = Float.parseFloat(num) * parser.getValueF(id);:}
+                |   IDENTIFIER:id ASTHERISK numberD:num                         {:  RESULT = parser.getValueF(id) * Float.parseFloat(num);:}
+                |   IDENTIFIER:id ASTHERISK IDENTIFIER:id2                      {:  RESULT = parser.getValueF(id) * parser.getValueF(id2);:}
+                ;
+
+divissorData::=     numberD:num DIVIDE numberD:num2                             {:  RESULT = Float.parseFloat(num) / Float.parseFloat(num2);:}
+                |   numberD:num DIVIDE IDENTIFIER:id                            {:  RESULT = Float.parseFloat(num) / parser.getValueF(id);:}
+                |   IDENTIFIER:id DIVIDE numberD:num                            {:  RESULT = parser.getValueF(id) / Float.parseFloat(num);:}
+                |   IDENTIFIER:id DIVIDE IDENTIFIER:id2                         {:  RESULT = parser.getValueF(id) / parser.getValueF(id2);:}
                 ;
 
 passOperators::=
@@ -432,4 +465,8 @@ logicalOperators::=
                 |   LESS:e                                                      {:  RESULT = e.toString();:}
                 |   GREATEREQUAL:e                                              {:  RESULT = e.toString();:}
                 |   LESSEQUAL:e                                                 {:  RESULT = e.toString();:}
+                ;
+
+numberD::=           NUMBER:num                                                 {:  RESULT = num;:}
+                |   DECIMAL:num                                                 {:  RESULT = num;:}
                 ;

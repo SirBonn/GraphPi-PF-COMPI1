@@ -21,6 +21,7 @@ import java_cup.runtime.*;
 WHITESPCS       = ([\s\t\r\n]+)
 DIGIT           = [0-9]
 NUMBER          = ([0-9][0-9]*)
+DECIMAL         = ([0-9][0-9]*"."[0-9][0-9]*)
 LETTER          = [a-zA-Z]
 STRING          = (\"([^\"]|[a-zA-Z]|(\s)|[0-9])+\")
 NUMBSIZE        = ([0-9]+)"px"
@@ -182,9 +183,11 @@ SINGLEQUOTE     = "\'"
 {ASTHERISK}                       {return symbol(ParserSym.ASTHERISK, yytext());}
 {DIVIDE}                          {return symbol(ParserSym.DIVIDE, yytext());}
 {IDENTIFIER}                      {return symbol(ParserSym.IDENTIFIER, yytext());}
+{DECIMAL}                         {return symbol(ParserSym.DECIMAL, yytext());}
 {NUMBER}                          {return symbol(ParserSym.NUMBER, yytext());}
 {DIGIT}                           {return symbol(ParserSym.DIGIT, yytext());}
 {LETTER}                          {return symbol(ParserSym.LETTER, yytext());}
 {STRING}                          {return symbol(ParserSym.STRING, yytext());}
 {WHITESPCS}                       {/*Ignore*/}
+
 [^]                               {addError(yytext());}
