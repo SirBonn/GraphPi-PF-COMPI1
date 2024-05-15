@@ -1,12 +1,14 @@
 package srbn.graphpi
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -22,7 +24,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var lexer: Lexer
     private lateinit var parser: Parser
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -50,6 +51,10 @@ class MainActivity : AppCompatActivity() {
             fileManager.saveFile()
         }
 
+        findViewById<Button>(R.id.new_file_button).setOnClickListener {
+            makeNewFile(fileManager)
+        }
+
         indentCode()
 
     }
@@ -61,6 +66,10 @@ class MainActivity : AppCompatActivity() {
             parser = Parser(lexer)
             parser.parse()
 
+            if(parser.errors.isNotEmpty()){
+                Toast.makeText(this, "EXISTEN ERRORES EN EL CODIGO", Toast.LENGTH_LONG).show()
+            }
+
             val generateChart = GenerateChart(parser.graphs)
             val intent = Intent(this, ShowGraphsActivity::class.java)
             intent.putExtra("chartGenerator", generateChart)
@@ -69,7 +78,6 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("sentences", parser.sentences)
             intent.putExtra("symbolTable", parser.symTable)
             startActivity(intent)
-
 
         } catch (e: Exception) {
             println("Error: ${e.message}")
@@ -83,7 +91,7 @@ class MainActivity : AppCompatActivity() {
 
             private var previousText = ""
             private var isAutoIndenting = false
-
+            val column = findViewById<TextView>(R.id.column_number)
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 if (!isAutoIndenting) {
                     previousText = s.toString()
@@ -100,6 +108,62 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun afterTextChanged(s: Editable?) {
+
+                s?.let {
+                    val text = it.toString()
+                    val wordsToColor =
+                        listOf("if", "else", "do", "while", "for") // Palabras que quieres colorear
+                    val logialOperators =
+                        listOf("==", "!=", "<", ">", "<=", ">=") // Operadores lógicos
+                    val agrupationOperators =
+                        listOf("(", ")", "{", "}", "[", "]") // Operadores de agrupación
+                    val allWords =
+                        text.split(" ","\n", "\t", ";", ",", ":") // Dividimos el texto en palabras
+
+                    for (word in allWords) {
+                        if (word.matches(Regex("[0-9]+"))) {
+                            colorText(
+                                input,
+                                word,
+                                Color.BLACK,
+                                Color.parseColor("#FFF8D9")
+                            ) // Coloreamos la palabra
+                        } else if (!word.matches(Regex("\"([^\"]*)\"")) ) {
+                            colorText(
+                                input,
+                                word,
+                                Color.BLACK,
+                                Color.parseColor("#FF9494")
+                            ) // Coloreamos la palabra
+                        } else {
+                            colorText(
+                                input,
+                                word,
+                                Color.BLACK,
+                                Color.WHITE
+                            ) // Coloreamos la palabra
+                        }
+                    }
+                    for (word in wordsToColor) {
+                        colorText(input, word, Color.YELLOW, Color.WHITE) // Coloreamos la palabra
+                    }
+                    for (word in logialOperators) {
+                        colorText(input, word, Color.BLUE, Color.WHITE) // Coloreamos la palabra
+                    }
+                    for (word in agrupationOperators) {
+                        colorText(input, word, Color.MAGENTA, Color.WHITE) // Coloreamos la palabra
+                    }
+
+                }
+
+                var currentColumn = 0;
+                s?.let {
+                    val text = it.toString()
+                    val cursorPosition = input.selectionStart
+                    currentColumn = calculateColumn(text, cursorPosition)
+                    column.text = "Columna: $currentColumn"
+                }
+
                 if (s == null || isAutoIndenting) return
 
                 val newText = s.toString()
@@ -142,5 +206,45 @@ class MainActivity : AppCompatActivity() {
         }
 
         return indentedLines.joinToString("\n")
+    }
+
+    private fun colorText(editText: EditText, word: String, color: Int, backC: Int) {
+        val text = editText.text.toString()
+        val start = text.indexOf(word)
+        if (start != -1) {
+            val end = start + word.length
+            editText.text.setSpan(
+                android.text.style.ForegroundColorSpan(color),
+                start,
+                end,
+                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            editText.text.setSpan(
+                android.text.style.BackgroundColorSpan(backC),
+                start,
+                end,
+                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+    }
+
+    private fun calculateColumn(text: String, cursorPosition: Int): Int {
+        var column = 0
+        for (i in 0 until cursorPosition) {
+            if (text[i] == '\n') {
+                column = 0 // Reiniciar el número de columna al encontrar un salto de línea
+            } else {
+                column++
+            }
+        }
+        return column
+    }
+
+
+    private fun makeNewFile(fileManager: FileManagement) {
+        if (findViewById<EditText>(R.id.inputCode).text.isNotEmpty()) {
+            fileManager.saveFile()
+        }
+        findViewById<EditText>(R.id.inputCode).setText("")
     }
 }

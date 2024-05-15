@@ -1,7 +1,11 @@
 package srbn.graphpi
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +17,7 @@ import srbn.graphpi.BackEnd.DomainObjs.Sentences.Sentence
 import srbn.graphpi.BackEnd.DomainObjs.Sentences.SentencesManager
 import srbn.graphpi.BackEnd.DomainObjs.SymTable
 import srbn.graphpi.BackEnd.GManagement.GenerateChart
+import srbn.graphpi.FrontEnd.ExportCharts
 
 
 class ShowGraphsActivity : AppCompatActivity() {
@@ -40,9 +45,6 @@ class ShowGraphsActivity : AppCompatActivity() {
         footherTextView.text = header.footer
         footherTextView.gravity = 1
         linearLayout.addView(footherTextView)
-        setErrorsPane(errors)
-
-
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -50,21 +52,58 @@ class ShowGraphsActivity : AppCompatActivity() {
             insets
         }
 
+        findViewById<Button>(R.id.exportButton).setOnClickListener {
+            showPopupMenu(it, chartGenerator)
+        }
+
     }
 
-    private fun setHeader(header: Header){
+    private fun setHeader(header: Header) {
         findViewById<TextView>(R.id.titleTextView).setText(header.title)
         findViewById<TextView>(R.id.descTextView).setText(header.desc)
         findViewById<TextView>(R.id.keysTextView).setText(header.keysString)
     }
 
-    private fun setErrorsPane(errors: ArrayList<ErrorP>){
-//        val errorPane = findViewById<LinearLayout>(R.id.errorPane)
-//        for (error in errors){
-//            val errorTextView = TextView(this)
-//            errorTextView.text = error.toString()
-//            errorPane.addView(errorTextView)
-//        }
+    private fun showErrors(errors: ArrayList<ErrorP>) {
+
+        val intent = Intent(this, ErrorReportActivity::class.java)
+        intent.putExtra("Errors", errors)
+        startActivity(intent)
+
+    }
+
+    private fun showPopupMenu(view: View, chartGenerator: GenerateChart) {
+        val popupMenu = PopupMenu(this, view)
+        val exportCharts = ExportCharts(this, chartGenerator.generatedCharts)
+        popupMenu.inflate(R.menu.popup_menu)
+
+        popupMenu.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.export_pdf -> {
+                    exportCharts.exportChartsAsPdf()
+                    true
+                }
+
+                R.id.export_html -> {
+                    exportCharts.exportChartsAsHtml()
+                    true
+                }
+
+                R.id.show_report -> {
+                    showErrors(chartGenerator.errors)
+                    true
+                }
+
+                R.id.export_images -> {
+                    exportCharts.exportChartsAsImages()
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        popupMenu.show()
     }
 
 }

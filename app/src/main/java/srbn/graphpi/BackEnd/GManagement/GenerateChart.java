@@ -48,8 +48,11 @@ public class GenerateChart implements Serializable {
     private ArrayList<ErrorP> errors;
     private Context context;
 
+    private ArrayList<Chart> generatedCharts;
+
     public GenerateChart(ArrayList<Graph> graphs) {
         this.graphs = graphs;
+        this.generatedCharts = new ArrayList<>();
     }
 
     public void createCharts() {
@@ -83,6 +86,7 @@ public class GenerateChart implements Serializable {
                 break;
         }
     }
+
     private ScatterChart createChartPlot(PlotGraph graph) {
         ScatterChart scatterChart = new ScatterChart(context);
         ArrayList<IScatterDataSet> dataSets = new ArrayList<>();
@@ -92,7 +96,7 @@ public class GenerateChart implements Serializable {
             j = (j > 4) ? 0 : j;
             ArrayList<Entry> entries = new ArrayList<>();
 
-            entries.add(new Entry( data.getX(), data.getY()));
+            entries.add(new Entry(data.getX(), data.getY()));
             ScatterDataSet dataSet = new ScatterDataSet(entries, data.getName());
             if (data.getColor() != null) {
                 dataSet.setColor(Color.parseColor(data.getColor()));
@@ -100,7 +104,7 @@ public class GenerateChart implements Serializable {
                 dataSet.setColor(ColorTemplate.COLORFUL_COLORS[j]);
             }
             if (data.getSize() != 0) {
-                dataSet.setScatterShapeHoleRadius( data.getSize());
+                dataSet.setScatterShapeHoleRadius(data.getSize());
             }
             dataSets.add(dataSet);
             j++;
@@ -111,7 +115,7 @@ public class GenerateChart implements Serializable {
 
         scatterChart.animateY(3000);
         scatterChart.invalidate();
-
+        this.generatedCharts.add(scatterChart);
         return scatterChart;
 
     }
@@ -126,7 +130,7 @@ public class GenerateChart implements Serializable {
             ArrayList<Entry> entries = new ArrayList<>();
 
             for (DataGraph data : ld.getData()) {
-                entries.add(new Entry(data.getX(),  data.getY()));
+                entries.add(new Entry(data.getX(), data.getY()));
             }
 
             LineDataSet dataSet = new LineDataSet(entries, ld.getName());
@@ -158,7 +162,7 @@ public class GenerateChart implements Serializable {
         }
         lineChart.animateY(3000);
         lineChart.invalidate();
-
+        this.generatedCharts.add(lineChart);
         return lineChart;
     }
 
@@ -187,7 +191,7 @@ public class GenerateChart implements Serializable {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
         pieChart.animateY(3000);
-
+        this.generatedCharts.add(pieChart);
         return pieChart;
     }
 
@@ -214,7 +218,7 @@ public class GenerateChart implements Serializable {
         barChart.animateY(3000);
         barChart.invalidate();
 
-
+        this.generatedCharts.add(barChart);
         return barChart;
     }
 
@@ -226,5 +230,9 @@ public class GenerateChart implements Serializable {
 
     public ArrayList<ErrorP> getErrors() {
         return errors;
+    }
+
+    public ArrayList<Chart> getGeneratedCharts() {
+        return generatedCharts;
     }
 }
