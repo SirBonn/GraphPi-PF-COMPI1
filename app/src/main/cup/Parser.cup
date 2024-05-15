@@ -20,15 +20,13 @@ parser code{:
 
     public void syntax_error(Symbol token) {
             if (token.sym != ParserSym.EOF){
-            //System.out.println("sintax error: " +token.value + " en la linea " + token.left);
                 addError(token, "Sintax error close at: ");
             }
         }
 
-        public void unrecovered_syntax_error(Symbol token) {
-            //System.out.println("unrec sintax error: " +token.value + " en la línea " + token.right+" en la columna " + token.left);
-            addError(token, "unrec error: ");
-        }
+//        public void unrecovered_syntax_error(Symbol token) {
+//            addError(token, "unrec error: ");
+//        }
 
         private String removeBrckt(String str){
             return str.replace("[", "").replace("]", "");
@@ -202,6 +200,7 @@ graphDecl::=
                                                                                    grs.add(gr); /*parser.addGraphs(gr);*/ RESULT = grs;:}
                 |   sentencesDecl                                               {:RESULT = new ArrayList<Graph>();:}
                 |   graphDecl:grs vls sentencesDecl                             {:RESULT = grs;:}
+                |   error OPENBRACKET                                           {::}
                 ;
 
 graphTypes::=
@@ -210,7 +209,6 @@ graphTypes::=
                 |   pieGraphDecl:pieGraph                                       {: RESULT = pieGraph;   :}
                 |   plotGraphDecl:plotGraph                                     {: RESULT = plotGraph;  :}
                 |   infoCard:infoCard                                           {: RESULT = infoCard;   :}
-                |   error                                                       {::}
                 ;
 
 
@@ -348,7 +346,6 @@ sentencesDecl::=
                 |   whileDecl:whileSent                                         {:  parser.addSentence(whileSent);:}
                 |   forDecl:forSent                                             {:  parser.addSentence(forSent);:}
                 |   doWhileDecl:dowhileSent                                     {:  parser.addSentence(dowhileSent);:}
-                |   error                                                       {::}
                 ;
 
 ifDecl::=
@@ -403,6 +400,7 @@ vars::=
                 ;
 varAssign::=        mathOperators:val SEMICOLON                                 {:  RESULT = val;:}
                 |   mathOperators:val numberD:val1 SEMICOLON                    {:  RESULT =val+val1;:}
+                |   error SEMICOLON                                             {::}
                 ;
 varDecl::=
                     STRING:val SEMICOLON                                        {:  RESULT = val; :}
@@ -417,6 +415,7 @@ dataValue::=
                 |   sumatoryData:sum                                            {:  RESULT = sum;:}
                 |   substractionData:sub                                        {:  RESULT = sub;:}
                 |   divissorData:div                                            {:  RESULT = div;:}
+                |   error SEMICOLON                                             {::}
                 ;
 
 sumatoryData::=     numberD:num PLUS numberD:num2                               {:  RESULT = Float.parseFloat(num) + Float.parseFloat(num2);:}
